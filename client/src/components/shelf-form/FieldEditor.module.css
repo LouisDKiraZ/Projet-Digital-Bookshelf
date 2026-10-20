@@ -1,0 +1,52 @@
+.row {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto auto;
+  gap: 0.6rem;
+  align-items: start;
+}
+
+.input,
+.select {
+  padding: 0.5rem 0.6rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-size: 0.95rem;
+  width: 100%;
+}
+
+.requiredToggle {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+  padding-top: 0.5rem;
+}
+
+.removeButton {
+  background: none;
+  border: none;
+  color: var(--color-danger);
+  cursor: pointer;
+  font-size: 0.85rem;
+  padding: 0.5rem 0.2rem;
+}
+
+.optionsRow {
+  grid-column: 1 / -1;
+}
+
+.optionsInput {
+  padding: 0.5rem 0.6rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-size: 0.9rem;
+  width: 100%;
+}
+
+.hint {
+  color: var(--color-text-muted);
+  font-size: 0.78rem;
+  margin-top: 0.25rem;
+}

@@ -1,0 +1,49 @@
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 0.4rem;
+}
+
+.emojiButton {
+  font-size: 1.4rem;
+  padding: 0.4rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid transparent;
+  background: var(--color-bg);
+  cursor: pointer;
+}
+
+.emojiButton:hover {
+  border-color: var(--color-border);
+}
+
+.emojiButtonSelected {
+  border-color: var(--color-primary);
+  background: #fff;
+}
+
+.customRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.customLabel {
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+}
+
+.customInput {
+  width: 3rem;
+  text-align: center;
+  font-size: 1.2rem;
+  padding: 0.3rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+}

@@ -1,0 +1,11 @@
+node_modules/
+dist/
+.env
+
+# Runtime data (SQLite database + uploaded files)
+server/data/*.sqlite
+server/data/uploads/**
+!server/data/uploads/shelf-icons/.gitkeep
+
+*.log
+.DS_Store
