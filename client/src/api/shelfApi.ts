@@ -1,32 +1,53 @@
-import { apiGet, apiPostForm } from './httpClient';
+import { ApiError } from './httpClient';
+import {
+  createShelf as createShelfLocally,
+  getShelf,
+  getShelfMembers,
+  listShelves,
+  updateShelf as updateShelfLocally,
+} from '../lib/localStore';
 import type { ShelfDraft, SavedShelf, ShelfMember } from '../types/shelf';
 
-export function createShelf(
+export async function createShelf(
   draft: ShelfDraft,
   createdByUserId: number,
   imageFile: File | null,
 ): Promise<SavedShelf> {
-  const formData = new FormData();
-  formData.append('name', draft.name);
-  formData.append('iconType', draft.icon.type);
-  formData.append('createdByUserId', String(createdByUserId));
-  formData.append('itemTypes', JSON.stringify(draft.itemTypes));
-
-  if (draft.icon.type === 'emoji') {
-    formData.append('iconValue', draft.icon.value);
-    formData.append('iconBgColor', draft.icon.bgColor);
-  } else if (imageFile) {
-    formData.append('iconImage', imageFile);
+  try {
+    return await createShelfLocally(draft, createdByUserId, imageFile);
+  } catch (error) {
+    throw new ApiError(error instanceof Error ? error.message : 'Could not create shelf.', 400);
   }
-
-  return apiPostForm<SavedShelf>('/api/shelves', formData);
 }
 
-export function fetchShelf(id: number): Promise<SavedShelf> {
-  return apiGet<SavedShelf>(`/api/shelves/${id}`);
+export async function updateShelf(
+  shelfId: number,
+  draft: ShelfDraft,
+  imageFile: File | null,
+): Promise<SavedShelf> {
+  try {
+    return await updateShelfLocally(shelfId, draft, imageFile);
+  } catch (error) {
+    throw new ApiError(error instanceof Error ? error.message : 'Could not update shelf.', 400);
+  }
+}
+
+export async function fetchShelves(): Promise<SavedShelf[]> {
+  return listShelves();
+}
+
+export async function fetchShelf(id: number): Promise<SavedShelf> {
+  try {
+    return getShelf(id);
+  } catch (error) {
+    throw new ApiError(error instanceof Error ? error.message : 'Could not load shelf.', 404);
+  }
 }
 
 export async function fetchShelfMembers(shelfId: number): Promise<ShelfMember[]> {
-  const { members } = await apiGet<{ members: ShelfMember[] }>(`/api/shelves/${shelfId}/members`);
-  return members;
+  try {
+    return getShelfMembers(shelfId);
+  } catch (error) {
+    throw new ApiError(error instanceof Error ? error.message : 'Could not load members.', 404);
+  }
 }

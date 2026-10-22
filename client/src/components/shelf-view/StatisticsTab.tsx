@@ -9,7 +9,7 @@ import styles from './StatisticsTab.module.css';
 interface StatisticsTabProps {
   shelf: SavedShelf;
   selectedItemTypeId: number;
-  onSelectItemType: (itemTypeId: number) => void;
+  onSelectItemType: (itemTypeId: number | null) => void;
 }
 
 // No dedicated stats endpoint: this reuses the same item list the Items
@@ -46,7 +46,11 @@ export function StatisticsTab({ shelf, selectedItemTypeId, onSelectItemType }: S
         <ItemTypeSwitcher
           itemTypes={shelf.itemTypes}
           selectedId={itemType.id}
-          onSelect={onSelectItemType}
+          onSelect={(itemTypeId) => {
+            if (itemTypeId !== null) {
+              onSelectItemType(itemTypeId);
+            }
+          }}
         />
         <label className={styles.selectRow}>
           Chart by
