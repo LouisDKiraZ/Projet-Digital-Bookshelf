@@ -28,6 +28,11 @@
   background: var(--color-primary-hover);
 }
 
+.addButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .hint {
   color: var(--color-text-muted);
 }

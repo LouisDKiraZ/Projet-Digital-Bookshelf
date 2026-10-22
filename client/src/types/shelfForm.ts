@@ -5,6 +5,7 @@
 
 export interface FieldFormState {
   uiId: string;
+  savedId?: number;
   label: string;
   fieldType: string;
   isRequired: boolean;
@@ -13,6 +14,7 @@ export interface FieldFormState {
 
 export interface ItemTypeFormState {
   uiId: string;
+  savedId?: number;
   name: string;
   fields: FieldFormState[];
 }
