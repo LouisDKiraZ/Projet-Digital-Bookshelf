@@ -20,7 +20,8 @@ export function App() {
     <AppLayout>
       <Routes>
         <Route path="/" element={<HomePage />} />
-        <Route path="/create" element={<CreateShelfPage />} />
+        <Route path="/create" element={<CreateShelfPage mode="create" />} />
+        <Route path="/shelves/:id/edit" element={<CreateShelfPage mode="edit" />} />
         <Route path="/shelves/:id" element={<ShelfPage />} />
       </Routes>
     </AppLayout>

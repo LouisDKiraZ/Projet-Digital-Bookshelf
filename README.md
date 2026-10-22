@@ -8,29 +8,17 @@ collection together (books, vinyls, or anything else you collect).
 | Side | Tech |
 |---|---|
 | Frontend | React 18 + TypeScript (Vite) |
-| Backend | Node.js + Express |
-| Database | SQLite (`node:sqlite`, built into Node 24) |
+| Data storage | Browser local storage (local-first, no backend required) |
 
 ## Project structure
 
 ```
 Digital Bookshelf/
 ├── CLAUDE.md           Project memory (read this for the full picture)
-├── server/             Express API
-│   ├── src/
-│   │   ├── index.js            entry point
-│   │   ├── config.js           env-driven constants
-│   │   ├── constants/          FIELD_TYPES (shared source of truth)
-│   │   ├── db/                 SQLite connection + schema
-│   │   ├── repositories/       SQL
-│   │   ├── controllers/        request handling + validation
-│   │   ├── middleware/         file upload, error handling
-│   │   └── routes/
-│   └── data/            SQLite file + uploaded images (gitignored)
 └── client/              React app
     └── src/
-        ├── api/                 fetch wrappers, one file per resource
-        ├── lib/                  recentShelves (localStorage), statistics (chart data)
+        ├── api/                 local data service wrappers
+        ├── lib/                  localStore (data), statistics (chart data)
         ├── types/                TypeScript types
         ├── context/              UserContext (lightweight identity)
         ├── pages/                HomePage, CreateShelfPage, ShelfPage
@@ -45,13 +33,7 @@ Digital Bookshelf/
 
 ## Running it locally
 
-Two terminals:
-
-```bash
-cd server
-npm install
-npm run dev
-```
+Only one terminal is needed:
 
 ```bash
 cd client
@@ -59,9 +41,8 @@ npm install
 npm run dev
 ```
 
-The API listens on `http://localhost:3000`, the app on `http://localhost:5173`.
-Copy `server/.env.example` to `server/.env` and `client/.env.example` to
-`client/.env` if you need to change the defaults.
+The app runs on `http://localhost:5173` and works fully offline/local in
+the browser (seeded with demo data on first load).
 
 ## Current state
 

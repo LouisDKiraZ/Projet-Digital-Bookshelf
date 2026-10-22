@@ -1,7 +1,4 @@
-// Mirrors the server's shapes (server/src/repositories/shelvesRepository.js
-// and server/src/constants/fieldTypes.js). FieldType itself is NOT
-// hardcoded here: it's fetched from GET /api/field-types at runtime so the
-// two sides can't drift apart (see src/api/fieldTypesApi.ts).
+// App-level data shapes used by the local-first shelf store.
 
 export interface FieldType {
   id: string;
@@ -11,6 +8,7 @@ export interface FieldType {
 }
 
 export interface FieldDraft {
+  id?: number;
   label: string;
   fieldType: string;
   isRequired: boolean;
@@ -18,6 +16,7 @@ export interface FieldDraft {
 }
 
 export interface ItemTypeDraft {
+  id?: number;
   name: string;
   fields: FieldDraft[];
 }
@@ -68,9 +67,9 @@ export interface ShelfMember {
   displayName: string;
 }
 
-// What a field's value looks like coming back from the API: a `person`
-// field resolves to its member instead of a bare id, everything else is
-// its plain value (or null when unset).
+// What a field's value looks like in app reads: a `person` field resolves
+// to its member instead of a bare id, everything else is its plain value
+// (or null when unset).
 export type ItemFieldValue = string | number | ShelfMember | null;
 
 export interface SavedItem {

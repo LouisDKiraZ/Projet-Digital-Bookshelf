@@ -1,20 +1,16 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { getRecentShelves, forgetShelf, type RecentShelf } from '../lib/recentShelves';
+import { fetchShelves } from '../api/shelfApi';
+import type { SavedShelf } from '../types/shelf';
 import { ShelfIcon } from '../components/shelf/ShelfIcon';
 import styles from './HomePage.module.css';
 
 export function HomePage() {
-  const [recentShelves, setRecentShelves] = useState<RecentShelf[]>([]);
+  const [shelves, setShelves] = useState<SavedShelf[]>([]);
 
   useEffect(() => {
-    setRecentShelves(getRecentShelves());
+    fetchShelves().then(setShelves).catch(() => setShelves([]));
   }, []);
-
-  function handleForget(shelfId: number) {
-    forgetShelf(shelfId);
-    setRecentShelves((shelves) => shelves.filter((shelf) => shelf.id !== shelfId));
-  }
 
   return (
     <div className={styles.page}>
@@ -29,25 +25,17 @@ export function HomePage() {
         </Link>
       </div>
 
-      {recentShelves.length > 0 && (
+      {shelves.length > 0 && (
         <div className={styles.recent}>
-          <h2 className={styles.recentTitle}>Your shelves</h2>
-          <p className={styles.recentHint}>Remembered on this device — not a real account yet.</p>
+          <h2 className={styles.recentTitle}>Shelves</h2>
+          <p className={styles.recentHint}>Stored locally in this browser.</p>
           <ul className={styles.recentList}>
-            {recentShelves.map((shelf) => (
+            {shelves.map((shelf) => (
               <li key={shelf.id} className={styles.recentItem}>
                 <Link to={`/shelves/${shelf.id}`} className={styles.recentLink}>
                   <ShelfIcon icon={shelf.icon} size={40} />
                   <span className={styles.recentName}>{shelf.name}</span>
                 </Link>
-                <button
-                  type="button"
-                  className={styles.forgetButton}
-                  onClick={() => handleForget(shelf.id)}
-                  title="Remove from this list (does not delete the shelf)"
-                >
-                  ✕
-                </button>
               </li>
             ))}
           </ul>

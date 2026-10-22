@@ -1,62 +1,68 @@
-import { apiGet, apiPostForm, apiPatchForm, apiDelete } from './httpClient';
+import { ApiError } from './httpClient';
+import {
+  createItem as createItemLocally,
+  deleteItem as deleteItemLocally,
+  getItemHistory,
+  getItems,
+  updateItem as updateItemLocally,
+} from '../lib/localStore';
 import type { SavedItem, ItemHistoryEntry } from '../types/shelf';
 
-// Values are sent as a fieldId -> raw string map, alongside any photo
-// files named `photo_<fieldId>` — mirrors what itemsController expects.
 export interface ItemValuesInput {
   values: Record<number, string>;
   photoFiles?: Record<number, File>;
 }
 
-function buildFormData(base: Record<string, string>, input: ItemValuesInput): FormData {
-  const formData = new FormData();
-  for (const [key, value] of Object.entries(base)) {
-    formData.append(key, value);
+export async function fetchItems(shelfId: number, itemTypeId: number | null): Promise<SavedItem[]> {
+  try {
+    return getItems(shelfId, itemTypeId);
+  } catch (error) {
+    throw new ApiError(error instanceof Error ? error.message : 'Could not load items.', 404);
   }
-  formData.append('values', JSON.stringify(input.values));
-  for (const [fieldId, file] of Object.entries(input.photoFiles ?? {})) {
-    formData.append(`photo_${fieldId}`, file);
-  }
-  return formData;
 }
 
-export async function fetchItems(shelfId: number, itemTypeId: number): Promise<SavedItem[]> {
-  const { items } = await apiGet<{ items: SavedItem[] }>(
-    `/api/shelves/${shelfId}/items?itemTypeId=${itemTypeId}`,
-  );
-  return items;
-}
-
-export function createItem(
+export async function createItem(
   shelfId: number,
   itemTypeId: number,
   createdByUserId: number,
   input: ItemValuesInput,
 ): Promise<SavedItem> {
-  const formData = buildFormData(
-    { itemTypeId: String(itemTypeId), createdByUserId: String(createdByUserId) },
-    input,
-  );
-  return apiPostForm<SavedItem>(`/api/shelves/${shelfId}/items`, formData);
+  try {
+    return await createItemLocally(shelfId, itemTypeId, createdByUserId, input.values, input.photoFiles);
+  } catch (error) {
+    throw new ApiError(error instanceof Error ? error.message : 'Could not create item.', 400);
+  }
 }
 
-export function updateItem(
+export async function updateItem(
   shelfId: number,
   itemId: number,
   updatedByUserId: number,
   input: ItemValuesInput,
 ): Promise<SavedItem> {
-  const formData = buildFormData({ updatedByUserId: String(updatedByUserId) }, input);
-  return apiPatchForm<SavedItem>(`/api/shelves/${shelfId}/items/${itemId}`, formData);
+  try {
+    return await updateItemLocally(shelfId, itemId, updatedByUserId, input.values, input.photoFiles);
+  } catch (error) {
+    throw new ApiError(error instanceof Error ? error.message : 'Could not update item.', 400);
+  }
 }
 
-export function deleteItem(shelfId: number, itemId: number, deletedByUserId: number): Promise<void> {
-  return apiDelete(`/api/shelves/${shelfId}/items/${itemId}?deletedByUserId=${deletedByUserId}`);
+export async function deleteItem(
+  shelfId: number,
+  itemId: number,
+  deletedByUserId: number,
+): Promise<void> {
+  try {
+    deleteItemLocally(shelfId, itemId, deletedByUserId);
+  } catch (error) {
+    throw new ApiError(error instanceof Error ? error.message : 'Could not remove item.', 400);
+  }
 }
 
 export async function fetchItemHistory(shelfId: number, itemId: number): Promise<ItemHistoryEntry[]> {
-  const { history } = await apiGet<{ history: ItemHistoryEntry[] }>(
-    `/api/shelves/${shelfId}/items/${itemId}/history`,
-  );
-  return history;
+  try {
+    return getItemHistory(shelfId, itemId);
+  } catch (error) {
+    throw new ApiError(error instanceof Error ? error.message : 'Could not load history.', 404);
+  }
 }
