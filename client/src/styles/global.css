@@ -7,8 +7,12 @@
   --color-primary: #a9643c;
   --color-primary-hover: #8f5230;
   --color-primary-contrast: #ffffff;
+  --color-secondary-bg: #f1ece3;
+  --color-secondary-bg-hover: #e8e0d2;
   --color-danger: #b23a3a;
+  --color-danger-hover: #8f2c2c;
   --color-danger-bg: #fbe9e9;
+  --color-success: #3f7d4f;
   --color-chart-bar: var(--color-primary);
   --color-chart-bar-hover: var(--color-primary-hover);
   --color-chart-track: #f1ece3;
@@ -16,7 +20,11 @@
   --radius-md: 10px;
   --radius-lg: 16px;
   --shadow-card: 0 1px 3px rgba(43, 36, 32, 0.08), 0 4px 16px rgba(43, 36, 32, 0.06);
+  --shadow-raised: 0 4px 10px rgba(43, 36, 32, 0.12), 0 8px 24px rgba(43, 36, 32, 0.08);
   --font-sans: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --transition-fast: 0.15s;
+  --transition-base: 0.25s;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 * {
@@ -43,4 +51,50 @@ h3 {
 
 p {
   margin: 0;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.94) translateY(6px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-8px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes popIn {
+  0% { transform: scale(0.6); opacity: 0; }
+  60% { transform: scale(1.15); opacity: 1; }
+  100% { transform: scale(1); }
+}
+
+@keyframes shake {
+  0%, 100% { transform: rotate(0); }
+  20% { transform: rotate(-12deg); }
+  40% { transform: rotate(10deg); }
+  60% { transform: rotate(-8deg); }
+  80% { transform: rotate(6deg); }
+}
+
+@keyframes flashHighlight {
+  0% { background-color: rgba(169, 100, 60, 0.18); }
+  100% { background-color: transparent; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
 }

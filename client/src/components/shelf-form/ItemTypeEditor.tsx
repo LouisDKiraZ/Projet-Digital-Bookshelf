@@ -62,14 +62,14 @@ export function ItemTypeEditor({
           className={styles.removeButton}
           onClick={onRemove}
           disabled={!canRemove}
-          title={canRemove ? 'Remove this item type' : 'A shelf needs at least one item type'}
+          title={canRemove ? "Remove this item type" : "A shelf needs at least one item type"}
         >
           Remove item type
         </button>
       </div>
 
       <div>
-        <p className={styles.fieldsLabel}>What do you want to track about each {itemType.name || 'item'}?</p>
+        <p className={styles.fieldsLabel}>What do you want to track for each {itemType.name || 'item'}?</p>
         <div className={styles.fieldsList}>
           {itemType.fields.map((field) => (
             <FieldEditor

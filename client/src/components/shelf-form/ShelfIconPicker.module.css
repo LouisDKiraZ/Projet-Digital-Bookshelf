@@ -16,6 +16,11 @@
   background: var(--color-surface);
   cursor: pointer;
   font-size: 0.9rem;
+  transition: background-color var(--transition-fast) ease, border-color var(--transition-fast) ease, transform var(--transition-fast) ease;
+}
+
+.tab:hover {
+  transform: translateY(-1px);
 }
 
 .tabActive {

@@ -28,7 +28,7 @@ export function ItemHistoryDialog({ shelfId, itemId, itemLabel, onClose }: ItemH
   useEffect(() => {
     fetchItemHistory(shelfId, itemId)
       .then(setEntries)
-      .catch(() => setError('Could not load history for this item.'));
+      .catch(() => setError("Unable to load this item's history."));
   }, [shelfId, itemId]);
 
   return (

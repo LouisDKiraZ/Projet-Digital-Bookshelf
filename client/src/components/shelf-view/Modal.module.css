@@ -7,17 +7,19 @@
   justify-content: center;
   padding: 1.5rem;
   z-index: 100;
+  animation: fadeIn var(--transition-fast) ease;
 }
 
 .dialog {
   background: var(--color-surface);
   border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-card);
+  box-shadow: var(--shadow-raised);
   width: min(520px, 100%);
   max-height: 85vh;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
+  animation: scaleIn var(--transition-base) var(--ease-out);
 }
 
 .header {

@@ -10,6 +10,7 @@
 .entry {
   border-bottom: 1px solid var(--color-border);
   padding-bottom: 0.6rem;
+  animation: fadeIn var(--transition-base) ease;
 }
 
 .description {

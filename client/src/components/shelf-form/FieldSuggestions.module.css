@@ -19,9 +19,15 @@
   background: var(--color-surface);
   font-size: 0.82rem;
   cursor: pointer;
+  transition: transform var(--transition-fast) ease, border-color var(--transition-fast) ease, color var(--transition-fast) ease;
 }
 
 .chip:hover {
   border-color: var(--color-primary);
   color: var(--color-primary);
+  transform: translateY(-1px);
+}
+
+.chip:active {
+  transform: translateY(0) scale(0.96);
 }

@@ -57,7 +57,7 @@ export function ShelfIconPicker({
       ) : (
         <div className={styles.imageRow}>
           {imagePreviewUrl ? (
-            <img className={styles.preview} src={imagePreviewUrl} alt="Shelf icon preview" />
+            <img className={styles.preview} src={imagePreviewUrl} alt="Preview of the shelf icon" />
           ) : (
             <div className={styles.previewPlaceholder}>No photo</div>
           )}

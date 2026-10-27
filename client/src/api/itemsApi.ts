@@ -17,7 +17,7 @@ export async function fetchItems(shelfId: number, itemTypeId: number | null): Pr
   try {
     return getItems(shelfId, itemTypeId);
   } catch (error) {
-    throw new ApiError(error instanceof Error ? error.message : 'Could not load items.', 404);
+    throw new ApiError(error instanceof Error ? error.message : 'Unable to load the items.', 404);
   }
 }
 
@@ -30,7 +30,7 @@ export async function createItem(
   try {
     return await createItemLocally(shelfId, itemTypeId, createdByUserId, input.values, input.photoFiles);
   } catch (error) {
-    throw new ApiError(error instanceof Error ? error.message : 'Could not create item.', 400);
+    throw new ApiError(error instanceof Error ? error.message : "Unable to create the item.", 400);
   }
 }
 
@@ -43,7 +43,7 @@ export async function updateItem(
   try {
     return await updateItemLocally(shelfId, itemId, updatedByUserId, input.values, input.photoFiles);
   } catch (error) {
-    throw new ApiError(error instanceof Error ? error.message : 'Could not update item.', 400);
+    throw new ApiError(error instanceof Error ? error.message : "Unable to update the item.", 400);
   }
 }
 
@@ -55,7 +55,7 @@ export async function deleteItem(
   try {
     deleteItemLocally(shelfId, itemId, deletedByUserId);
   } catch (error) {
-    throw new ApiError(error instanceof Error ? error.message : 'Could not remove item.', 400);
+    throw new ApiError(error instanceof Error ? error.message : "Unable to remove the item.", 400);
   }
 }
 
@@ -63,6 +63,6 @@ export async function fetchItemHistory(shelfId: number, itemId: number): Promise
   try {
     return getItemHistory(shelfId, itemId);
   } catch (error) {
-    throw new ApiError(error instanceof Error ? error.message : 'Could not load history.', 404);
+    throw new ApiError(error instanceof Error ? error.message : "Unable to load the history.", 404);
   }
 }

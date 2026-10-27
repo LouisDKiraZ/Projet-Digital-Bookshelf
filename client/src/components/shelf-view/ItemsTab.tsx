@@ -7,6 +7,7 @@ import { ItemTypeSwitcher } from './ItemTypeSwitcher';
 import { FieldValueDisplay } from './FieldValueDisplay';
 import { ItemFormDialog } from './ItemFormDialog';
 import { ItemHistoryDialog } from './ItemHistoryDialog';
+import { Button } from '../common/Button';
 import styles from './ItemsTab.module.css';
 
 interface ItemsTabProps {
@@ -33,15 +34,24 @@ export function ItemsTab({ shelf, members, selectedItemTypeId, onSelectItemType 
   const [isCreating, setIsCreating] = useState(false);
   const [editingItem, setEditingItem] = useState<SavedItem | null>(null);
   const [historyItem, setHistoryItem] = useState<SavedItem | null>(null);
+  const [newItemId, setNewItemId] = useState<number | null>(null);
 
   useEffect(() => {
     setIsLoading(true);
     setError(null);
     fetchItems(shelf.id, selectedItemTypeId)
       .then(setItems)
-      .catch(() => setError('Could not load items for this shelf.'))
+      .catch(() => setError('Unable to load this shelf\'s items.'))
       .finally(() => setIsLoading(false));
   }, [shelf.id, selectedItemTypeId]);
+
+  useEffect(() => {
+    if (newItemId === null) {
+      return;
+    }
+    const timeoutId = window.setTimeout(() => setNewItemId(null), 1600);
+    return () => window.clearTimeout(timeoutId);
+  }, [newItemId]);
 
   if (!user) {
     return null;
@@ -51,6 +61,7 @@ export function ItemsTab({ shelf, members, selectedItemTypeId, onSelectItemType 
   async function handleCreate(values: Record<number, string>, photoFiles: Record<number, File>) {
     const created = await createItem(shelf.id, itemType.id, userId, { values, photoFiles });
     setItems((prev) => [...prev, created]);
+    setNewItemId(created.id);
     setIsCreating(false);
   }
 
@@ -64,14 +75,14 @@ export function ItemsTab({ shelf, members, selectedItemTypeId, onSelectItemType 
   }
 
   async function handleDelete(item: SavedItem, itemTypeForItem: SavedItemType) {
-    if (!window.confirm(`Remove "${itemLabel(item, itemTypeForItem)}"? This can't be undone.`)) {
+    if (!window.confirm(`Remove "${itemLabel(item, itemTypeForItem)}"? This action is irreversible.`)) {
       return;
     }
     try {
       await deleteItem(shelf.id, item.id, userId);
       setItems((prev) => prev.filter((candidate) => candidate.id !== item.id));
     } catch (deleteError) {
-      setError(deleteError instanceof ApiError ? deleteError.message : 'Could not remove this item.');
+      setError(deleteError instanceof ApiError ? deleteError.message : 'Unable to remove this item.');
     }
   }
 
@@ -84,21 +95,16 @@ export function ItemsTab({ shelf, members, selectedItemTypeId, onSelectItemType 
           onSelect={onSelectItemType}
           includeAll
         />
-        <button
-          type="button"
-          className={styles.addButton}
-          onClick={() => setIsCreating(true)}
-          disabled={isAllFilter}
-        >
+        <Button variant="primary" size="small" onClick={() => setIsCreating(true)} disabled={isAllFilter}>
           + Add {itemType.name}
-        </button>
+        </Button>
       </div>
 
       {error && <p className={styles.errorBanner}>{error}</p>}
       {isLoading && <p className={styles.hint}>Loading...</p>}
       {!isLoading && items.length === 0 && (
         <p className={styles.hint}>
-          {isAllFilter ? 'No items yet.' : `No ${itemType.name.toLowerCase()} items yet.`}
+          {isAllFilter ? 'No items yet.' : `No items of type ${itemType.name.toLowerCase()} yet.`}
         </p>
       )}
 
@@ -128,7 +134,7 @@ export function ItemsTab({ shelf, members, selectedItemTypeId, onSelectItemType 
                 const itemTypeForRow =
                   shelf.itemTypes.find((candidate) => candidate.id === item.itemTypeId) ?? itemType;
                 return (
-                  <tr key={item.id}>
+                  <tr key={item.id} className={item.id === newItemId ? styles.isNew : ''}>
                     {isAllFilter ? (
                       <>
                         <td>{itemTypeForRow.name}</td>

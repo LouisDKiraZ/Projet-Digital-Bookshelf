@@ -27,9 +27,35 @@
   font-size: 1.4rem;
 }
 
+.userMenu {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+.userInfo {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  color: var(--color-primary-contrast);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
 .viewer {
-  color: var(--color-text-muted);
-  font-size: 0.9rem;
+  color: var(--color-text);
+  font-weight: 600;
+  font-size: 0.95rem;
 }
 
 .main {

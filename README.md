@@ -3,6 +3,8 @@
 A web app for creating a shared shelf with other people and cataloging a
 collection together (books, vinyls, or anything else you collect).
 
+The app's UI, this README, and the code are all in English.
+
 ## Stack
 
 | Side | Tech |
@@ -23,11 +25,13 @@ Digital Bookshelf/
         ├── context/              UserContext (lightweight identity)
         ├── pages/                HomePage, CreateShelfPage, ShelfPage
         └── components/
+            ├── common/            shared Button component
             ├── layout/
-            ├── identity/
+            ├── identity/          AuthScreen (login/register)
+            ├── notifications/    notification bell, panel, envelope cards
             ├── shelf/             shared ShelfIcon renderer
             ├── shelf-form/       the shelf creation wizard
-            ├── shelf-view/       the shelf page's Items/Statistics/People tabs
+            ├── shelf-view/       the shelf page's Items/Statistics/Members tabs
             └── charts/            BarChart
 ```
 
@@ -46,10 +50,12 @@ the browser (seeded with demo data on first load).
 
 ## Current state
 
-You can create a shelf (name, emoji+background-color or photo icon, one or
-more item types with custom criteria), and a shelf page lets you add, edit
-and remove items (with a visible edit history), chart statistics over any
-criterion or over who added items, and see the shelf's members (read-only
-for now — inviting/removing people is still to come). The home page lists
-all shelves stored in this browser's local data.
-See `CLAUDE.md` for the full feature vision and what's still to build.
+You can register/log in, create a shelf (name, emoji+background-color or
+photo icon, one or more item types with custom criteria), and a shelf page
+lets you add, edit and remove items (with a visible edit history), chart
+statistics over any criterion or over who added items, and manage the
+shelf's members — including searching for another local account and
+inviting them, who then gets a live notification they can accept or
+decline. The home page lists all shelves stored in this browser's local
+data. See `CLAUDE.md` for the full feature vision, the local-first
+invitations/notifications caveat, and what's still to build.

@@ -1,6 +1,6 @@
 import { Routes, Route } from 'react-router-dom';
 import { useUser } from './context/UserContext';
-import { DisplayNamePrompt } from './components/identity/DisplayNamePrompt';
+import { AuthScreen } from './components/identity/AuthScreen';
 import { AppLayout } from './components/layout/AppLayout';
 import { HomePage } from './pages/HomePage';
 import { CreateShelfPage } from './pages/CreateShelfPage';
@@ -12,8 +12,9 @@ export function App() {
   if (isLoading) {
     return null;
   }
+
   if (!user) {
-    return <DisplayNamePrompt />;
+    return <AuthScreen />;
   }
 
   return (

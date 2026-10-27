@@ -1,14 +1,18 @@
 import type {
+  AppNotification,
   FieldSuggestion,
   FieldType,
+  Invitation,
   ItemFieldValue,
   ItemHistoryEntry,
   ItemTypeDraft,
+  NotificationType,
   SavedField,
   SavedItem,
   SavedShelf,
   ShelfDraft,
   ShelfMember,
+  ShelfSummary,
 } from '../types/shelf';
 
 const STORAGE_KEY = 'digital-bookshelf.local-db.v1';
@@ -34,8 +38,8 @@ const FIELD_TYPES: FieldType[] = [
   },
   {
     id: 'list',
-    label: 'List of options',
-    description: 'A choice from a fixed set of options, e.g. a genre.',
+    label: 'Option list',
+    description: 'A choice among a fixed set of options, e.g. a genre.',
     hasOptions: true,
   },
   {
@@ -56,7 +60,9 @@ type LocalValue = string | number | null;
 
 interface LocalUser {
   id: number;
+  username: string;
   displayName: string;
+  passwordHash: string;
   createdAt: string;
 }
 
@@ -100,6 +106,27 @@ interface LocalHistoryEntry {
   changedAt: string;
 }
 
+interface LocalInvitation {
+  id: number;
+  shelfId: number;
+  fromUserId: number;
+  toUserId: number;
+  status: 'pending' | 'accepted' | 'declined';
+  createdAt: string;
+  respondedAt: string | null;
+}
+
+interface LocalNotification {
+  id: number;
+  userId: number;
+  type: NotificationType;
+  shelfId: number;
+  actorUserId: number;
+  invitationId: number | null;
+  createdAt: string;
+  readAt: string | null;
+}
+
 interface LocalDb {
   counters: {
     userId: number;
@@ -108,11 +135,15 @@ interface LocalDb {
     fieldId: number;
     itemId: number;
     historyId: number;
+    invitationId: number;
+    notificationId: number;
   };
   users: LocalUser[];
   shelves: LocalShelf[];
   items: LocalItem[];
   history: LocalHistoryEntry[];
+  invitations: LocalInvitation[];
+  notifications: LocalNotification[];
 }
 
 function nowIso() {
@@ -125,14 +156,30 @@ function nextId(db: LocalDb, key: keyof LocalDb['counters']): number {
   return value;
 }
 
+async function hashPassword(password: string): Promise<string> {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(password);
+  const hashBuffer = await window.crypto.subtle.digest('SHA-256', data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
+}
+
 function createSeedDb(): LocalDb {
   const createdAt = nowIso();
-  const users: LocalUser[] = [{ id: 1, displayName: 'Demo user', createdAt }];
-
+  const users: LocalUser[] = [
+    { 
+      id: 1, 
+      username: 'demo',
+      displayName: 'Demo user',
+      passwordHash: '2a97516c354b68848cdbd8f54a226a0a55b21ed138e207ad6c5cbb9c00aa5aea', // Hash of 'demo'
+      createdAt 
+    }
+  ];
+  
   const shelves: LocalShelf[] = [
     {
       id: 1,
-      name: 'Sample bookshelf',
+      name: 'Sample shelf',
       icon: { type: 'emoji', value: '📚', bgColor: '#f1e4d3' },
       createdBy: 1,
       createdAt,
@@ -189,12 +236,26 @@ function createSeedDb(): LocalDb {
       fieldId: 4,
       itemId: 2,
       historyId: 2,
+      invitationId: 1,
+      notificationId: 1,
     },
     users,
     shelves,
     items,
     history,
+    invitations: [],
+    notifications: [],
   };
+}
+
+// Databases saved before invitations/notifications existed won't have these
+// fields — fill them in rather than losing the rest of the user's local data.
+function migrateDb(db: LocalDb): LocalDb {
+  db.invitations ??= [];
+  db.notifications ??= [];
+  db.counters.invitationId ??= 1;
+  db.counters.notificationId ??= 1;
+  return db;
 }
 
 function loadDb(): LocalDb {
@@ -205,13 +266,15 @@ function loadDb(): LocalDb {
       saveDb(seeded);
       return seeded;
     }
-    return JSON.parse(raw) as LocalDb;
+    return migrateDb(JSON.parse(raw) as LocalDb);
   } catch {
     const seeded = createSeedDb();
     saveDb(seeded);
     return seeded;
   }
 }
+
+export const LOCAL_DB_STORAGE_KEY = STORAGE_KEY;
 
 function saveDb(db: LocalDb) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(db));
@@ -223,6 +286,14 @@ function getUser(db: LocalDb, userId: number): ShelfMember {
     return { id: userId, displayName: 'Unknown' };
   }
   return { id: user.id, displayName: user.displayName };
+}
+
+function getShelfSummary(db: LocalDb, shelfId: number): ShelfSummary {
+  const shelf = db.shelves.find((candidate) => candidate.id === shelfId);
+  if (!shelf) {
+    return { id: shelfId, name: 'Deleted shelf', icon: { type: 'emoji', value: '📚', bgColor: '#f1e4d3' } };
+  }
+  return { id: shelf.id, name: shelf.name, icon: shelf.icon };
 }
 
 function toSavedShelf(localShelf: LocalShelf): SavedShelf {
@@ -282,11 +353,9 @@ function parseFieldValue(field: SavedField, raw: string, memberIds: Set<number>)
     }
     return parsed;
   }
-
   if (field.fieldType === 'date') {
     return parseDate(raw);
   }
-
   if (field.fieldType === 'person') {
     if (!raw.trim()) {
       return null;
@@ -297,7 +366,6 @@ function parseFieldValue(field: SavedField, raw: string, memberIds: Set<number>)
     }
     return personId;
   }
-
   if (field.fieldType === 'list') {
     if (!raw.trim()) {
       return null;
@@ -307,25 +375,22 @@ function parseFieldValue(field: SavedField, raw: string, memberIds: Set<number>)
     }
     return raw;
   }
-
   if (!raw.trim()) {
     return null;
   }
-
   if (field.fieldType === 'text') {
     return raw.slice(0, 500);
   }
-
   return raw;
 }
 
 async function fileToDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
-    reader.onerror = () => reject(new Error('Could not read this file.'));
+    reader.onerror = () => reject(new Error('Unable to read this file.'));
     reader.onload = () => {
       if (typeof reader.result !== 'string') {
-        reject(new Error('Could not read this file.'));
+        reject(new Error('Unable to read this file.'));
         return;
       }
       resolve(reader.result);
@@ -360,7 +425,7 @@ function sameValue(left: LocalValue, right: LocalValue): boolean {
 function ensureShelf(db: LocalDb, shelfId: number): LocalShelf {
   const shelf = db.shelves.find((candidate) => candidate.id === shelfId);
   if (!shelf) {
-    throw new Error('This shelf could not be found.');
+    throw new Error("This shelf was not found.");
   }
   return shelf;
 }
@@ -368,7 +433,7 @@ function ensureShelf(db: LocalDb, shelfId: number): LocalShelf {
 function ensureItemType(shelf: LocalShelf, itemTypeId: number): LocalItemType {
   const itemType = shelf.itemTypes.find((candidate) => candidate.id === itemTypeId);
   if (!itemType) {
-    throw new Error('This item type could not be found.');
+    throw new Error("This item type was not found.");
   }
   return itemType;
 }
@@ -376,7 +441,7 @@ function ensureItemType(shelf: LocalShelf, itemTypeId: number): LocalItemType {
 function ensureItem(db: LocalDb, shelfId: number, itemId: number): LocalItem {
   const item = db.items.find((candidate) => candidate.id === itemId && candidate.shelfId === shelfId);
   if (!item || item.deletedAt) {
-    throw new Error('This item could not be found.');
+    throw new Error("This item was not found.");
   }
   return item;
 }
@@ -430,34 +495,50 @@ export function getFieldTypes(): FieldType[] {
   return FIELD_TYPES;
 }
 
-export function identifyUser(displayName: string): { id: number; displayName: string } {
-  const trimmedName = displayName.trim();
-  if (!trimmedName) {
-    throw new Error('Please enter a display name.');
-  }
-
+export async function registerUser(username: string, displayName: string, passwordRaw: string): Promise<{ id: number; username: string; displayName: string }> {
   const db = loadDb();
-  const existing = db.users.find(
-    (user) => user.displayName.toLocaleLowerCase() === trimmedName.toLocaleLowerCase(),
-  );
-  if (existing) {
-    return { id: existing.id, displayName: existing.displayName };
+  const normalizedUsername = username.trim().toLowerCase();
+  
+  if (db.users.some(u => u.username.toLowerCase() === normalizedUsername)) {
+    throw new Error('This username is already taken.');
   }
 
-  const user = {
+  const passwordHash = await hashPassword(passwordRaw);
+  
+  const user: LocalUser = {
     id: nextId(db, 'userId'),
-    displayName: trimmedName,
+    username: normalizedUsername,
+    displayName: displayName.trim(),
+    passwordHash,
     createdAt: nowIso(),
   };
+
   db.users.push(user);
   saveDb(db);
-  return { id: user.id, displayName: user.displayName };
+  
+  return { id: user.id, username: user.username, displayName: user.displayName };
+}
+
+export async function loginUser(username: string, passwordRaw: string): Promise<{ id: number; username: string; displayName: string }> {
+  const db = loadDb();
+  const normalizedUsername = username.trim().toLowerCase();
+  const user = db.users.find(u => u.username.toLowerCase() === normalizedUsername);
+  
+  if (!user) {
+    throw new Error("Invalid username or password.");
+  }
+
+  const inputHash = await hashPassword(passwordRaw);
+  if (user.passwordHash !== inputHash) {
+    throw new Error("Invalid username or password.");
+  }
+
+  return { id: user.id, username: user.username, displayName: user.displayName };
 }
 
 export function getFieldSuggestions(): FieldSuggestion[] {
   const db = loadDb();
   const seen = new Map<string, FieldSuggestion>();
-
   for (const shelf of db.shelves) {
     for (const itemType of shelf.itemTypes) {
       for (const field of itemType.fields) {
@@ -472,7 +553,6 @@ export function getFieldSuggestions(): FieldSuggestion[] {
       }
     }
   }
-
   return [...seen.values()];
 }
 
@@ -500,7 +580,6 @@ export async function createShelf(
   const db = loadDb();
   const iconValue =
     draft.icon.type === 'image' ? await fileToDataUrl(imageFile as File) : draft.icon.value;
-
   const shelf: LocalShelf = {
     id: nextId(db, 'shelfId'),
     name: draft.name,
@@ -513,7 +592,6 @@ export async function createShelf(
     memberUserIds: [createdByUserId],
     itemTypes: parseDraftItemTypes(db, draft.itemTypes),
   };
-
   db.shelves.push(shelf);
   saveDb(db);
   return toSavedShelf(shelf);
@@ -522,22 +600,18 @@ export async function createShelf(
 function migrateItemsAfterShelfConfigUpdate(db: LocalDb, shelf: LocalShelf, previousItemTypes: LocalItemType[]) {
   const nextTypeIds = new Set(shelf.itemTypes.map((itemType) => itemType.id));
   const previousTypeById = new Map(previousItemTypes.map((itemType) => [itemType.id, itemType]));
-
   db.items = db.items.filter((item) => {
     if (item.shelfId !== shelf.id) {
       return true;
     }
     return nextTypeIds.has(item.itemTypeId);
   });
-
   const validItemIds = new Set(db.items.map((item) => item.id));
   db.history = db.history.filter((entry) => validItemIds.has(entry.itemId));
-
   for (const item of db.items) {
     if (item.shelfId !== shelf.id) {
       continue;
     }
-
     const nextItemType = shelf.itemTypes.find((candidate) => candidate.id === item.itemTypeId);
     if (!nextItemType) {
       continue;
@@ -545,14 +619,12 @@ function migrateItemsAfterShelfConfigUpdate(db: LocalDb, shelf: LocalShelf, prev
     const previousItemType = previousTypeById.get(item.itemTypeId);
     const previousFieldById = new Map(previousItemType?.fields.map((field) => [field.id, field]) ?? []);
     const migratedValues: Record<string, LocalValue> = {};
-
     for (const field of nextItemType.fields) {
       const previousField = previousFieldById.get(field.id);
       const previousValue = item.values[String(field.id)] ?? null;
       const compatible = previousField?.fieldType === field.fieldType;
       migratedValues[String(field.id)] = compatible ? previousValue : null;
     }
-
     item.values = migratedValues;
   }
 }
@@ -569,9 +641,7 @@ export async function updateShelf(
     ...itemType,
     fields: itemType.fields.map((field) => ({ ...field })),
   }));
-
   shelf.name = draft.name;
-
   if (draft.icon.type === 'emoji') {
     shelf.icon = { type: 'emoji', value: draft.icon.value, bgColor: draft.icon.bgColor };
   } else {
@@ -582,11 +652,9 @@ export async function updateShelf(
     }
     shelf.icon = { type: 'image', value: nextImageValue, bgColor: null };
   }
-
   shelf.itemTypes = parseDraftItemTypes(db, draft.itemTypes);
   migrateItemsAfterShelfConfigUpdate(db, shelf, previousItemTypes);
   saveDb(db);
-
   return toSavedShelf(shelf);
 }
 
@@ -594,21 +662,18 @@ export function getItems(shelfId: number, itemTypeId: number | null): SavedItem[
   const db = loadDb();
   const shelf = ensureShelf(db, shelfId);
   const typeById = new Map(shelf.itemTypes.map((itemType) => [itemType.id, itemType]));
-
   return db.items
     .filter((item) => item.shelfId === shelfId && !item.deletedAt)
     .filter((item) => (itemTypeId === null ? true : item.itemTypeId === itemTypeId))
     .map((item) => {
       const itemType = typeById.get(item.itemTypeId);
       if (!itemType) {
-        throw new Error('This item type could not be found.');
+        throw new Error("This item type was not found.");
       }
-
       const values: Record<string, ItemFieldValue> = {};
       for (const field of itemType.fields) {
         values[String(field.id)] = toSavedValue(db, field, item.values[String(field.id)] ?? null);
       }
-
       return {
         id: item.id,
         itemTypeId: item.itemTypeId,
@@ -631,7 +696,6 @@ export async function createItem(
   const itemType = ensureItemType(shelf, itemTypeId);
   const memberIds = new Set(shelf.memberUserIds);
   const normalizedValues: Record<string, LocalValue> = {};
-
   for (const field of itemType.fields) {
     if (field.fieldType === 'photo') {
       const photoFile = photoFiles[field.id];
@@ -641,9 +705,7 @@ export async function createItem(
     const raw = valuesByFieldId[field.id] ?? '';
     normalizedValues[String(field.id)] = parseFieldValue(field, raw, memberIds);
   }
-
   validateRequired(itemType.fields, normalizedValues);
-
   const item: LocalItem = {
     id: nextId(db, 'itemId'),
     shelfId,
@@ -654,7 +716,6 @@ export async function createItem(
     values: normalizedValues,
   };
   db.items.push(item);
-
   db.history.push({
     id: nextId(db, 'historyId'),
     shelfId,
@@ -666,7 +727,6 @@ export async function createItem(
     changedBy: createdByUserId,
     changedAt: nowIso(),
   });
-
   saveDb(db);
   return getItems(shelfId, itemTypeId).find((candidate) => candidate.id === item.id) as SavedItem;
 }
@@ -683,9 +743,7 @@ export async function updateItem(
   const item = ensureItem(db, shelfId, itemId);
   const itemType = ensureItemType(shelf, item.itemTypeId);
   const memberIds = new Set(shelf.memberUserIds);
-
   const nextValues: Record<string, LocalValue> = { ...item.values };
-
   for (const field of itemType.fields) {
     const key = String(field.id);
     if (field.fieldType === 'photo') {
@@ -698,13 +756,10 @@ export async function updateItem(
       }
       continue;
     }
-
     const raw = valuesByFieldId[field.id] ?? '';
     nextValues[key] = parseFieldValue(field, raw, memberIds);
   }
-
   validateRequired(itemType.fields, nextValues);
-
   for (const field of itemType.fields) {
     const key = String(field.id);
     const previousValue = item.values[key] ?? null;
@@ -724,7 +779,6 @@ export async function updateItem(
       changedAt: nowIso(),
     });
   }
-
   item.values = nextValues;
   saveDb(db);
   return getItems(shelfId, itemType.id).find((candidate) => candidate.id === item.id) as SavedItem;
@@ -734,7 +788,6 @@ export function deleteItem(shelfId: number, itemId: number, deletedByUserId: num
   const db = loadDb();
   const item = ensureItem(db, shelfId, itemId);
   item.deletedAt = nowIso();
-
   db.history.push({
     id: nextId(db, 'historyId'),
     shelfId,
@@ -746,7 +799,6 @@ export function deleteItem(shelfId: number, itemId: number, deletedByUserId: num
     changedBy: deletedByUserId,
     changedAt: nowIso(),
   });
-
   saveDb(db);
 }
 
@@ -765,4 +817,155 @@ export function getItemHistory(shelfId: number, itemId: number): ItemHistoryEntr
       changedBy: getUser(db, entry.changedBy),
       changedAt: entry.changedAt,
     }));
+}
+
+const MAX_USER_SEARCH_RESULTS = 10;
+
+export function searchUsers(query: string, excludeUserIds: number[]): ShelfMember[] {
+  const normalizedQuery = query.trim().toLowerCase();
+  if (!normalizedQuery) {
+    return [];
+  }
+  const db = loadDb();
+  const excluded = new Set(excludeUserIds);
+  return db.users
+    .filter((candidate) => !excluded.has(candidate.id))
+    .filter(
+      (candidate) =>
+        candidate.displayName.toLowerCase().includes(normalizedQuery) ||
+        candidate.username.toLowerCase().includes(normalizedQuery),
+    )
+    .slice(0, MAX_USER_SEARCH_RESULTS)
+    .map((candidate) => ({ id: candidate.id, displayName: candidate.displayName }));
+}
+
+export function getPendingInvitationForShelf(shelfId: number, toUserId: number): Invitation | null {
+  const db = loadDb();
+  const invitation = db.invitations.find(
+    (candidate) => candidate.shelfId === shelfId && candidate.toUserId === toUserId && candidate.status === 'pending',
+  );
+  if (!invitation) {
+    return null;
+  }
+  return {
+    id: invitation.id,
+    shelf: getShelfSummary(db, invitation.shelfId),
+    from: getUser(db, invitation.fromUserId),
+    status: invitation.status,
+    createdAt: invitation.createdAt,
+  };
+}
+
+export function sendInvitation(shelfId: number, fromUserId: number, toUserId: number): void {
+  const db = loadDb();
+  const shelf = ensureShelf(db, shelfId);
+  if (toUserId === fromUserId) {
+    throw new Error('You cannot invite yourself.');
+  }
+  if (shelf.memberUserIds.includes(toUserId)) {
+    throw new Error('This person is already a member of this shelf.');
+  }
+  const alreadyPending = db.invitations.some(
+    (candidate) => candidate.shelfId === shelfId && candidate.toUserId === toUserId && candidate.status === 'pending',
+  );
+  if (alreadyPending) {
+    throw new Error('An invitation is already pending for this person.');
+  }
+  const invitation: LocalInvitation = {
+    id: nextId(db, 'invitationId'),
+    shelfId,
+    fromUserId,
+    toUserId,
+    status: 'pending',
+    createdAt: nowIso(),
+    respondedAt: null,
+  };
+  db.invitations.push(invitation);
+  db.notifications.push({
+    id: nextId(db, 'notificationId'),
+    userId: toUserId,
+    type: 'invite_received',
+    shelfId,
+    actorUserId: fromUserId,
+    invitationId: invitation.id,
+    createdAt: nowIso(),
+    readAt: null,
+  });
+  saveDb(db);
+}
+
+function toAppNotification(db: LocalDb, entry: LocalNotification): AppNotification {
+  const invitation = entry.invitationId
+    ? db.invitations.find((candidate) => candidate.id === entry.invitationId) ?? null
+    : null;
+  return {
+    id: entry.id,
+    type: entry.type,
+    shelf: getShelfSummary(db, entry.shelfId),
+    actor: getUser(db, entry.actorUserId),
+    invitationId: entry.invitationId,
+    invitationStatus: invitation?.status ?? null,
+    createdAt: entry.createdAt,
+    readAt: entry.readAt,
+  };
+}
+
+export function getNotifications(userId: number): AppNotification[] {
+  const db = loadDb();
+  return db.notifications
+    .filter((entry) => entry.userId === userId)
+    .sort((a, b) => b.id - a.id)
+    .map((entry) => toAppNotification(db, entry));
+}
+
+export function getUnreadNotificationCount(userId: number): number {
+  const db = loadDb();
+  return db.notifications.filter((entry) => entry.userId === userId && !entry.readAt).length;
+}
+
+export function markNotificationsRead(userId: number): void {
+  const db = loadDb();
+  let changed = false;
+  for (const entry of db.notifications) {
+    if (entry.userId === userId && !entry.readAt) {
+      entry.readAt = nowIso();
+      changed = true;
+    }
+  }
+  if (changed) {
+    saveDb(db);
+  }
+}
+
+export function respondToInvitation(invitationId: number, respondingUserId: number, accept: boolean): void {
+  const db = loadDb();
+  const invitation = db.invitations.find((candidate) => candidate.id === invitationId);
+  if (!invitation) {
+    throw new Error("This invitation was not found.");
+  }
+  if (invitation.toUserId !== respondingUserId) {
+    throw new Error("This invitation is not addressed to you.");
+  }
+  if (invitation.status !== 'pending') {
+    throw new Error('This invitation has already been responded to.');
+  }
+  invitation.status = accept ? 'accepted' : 'declined';
+  invitation.respondedAt = nowIso();
+  if (accept) {
+    const shelf = ensureShelf(db, invitation.shelfId);
+    if (!shelf.memberUserIds.includes(respondingUserId)) {
+      shelf.memberUserIds.push(respondingUserId);
+    }
+  }
+  db.notifications.push({
+    id: nextId(db, 'notificationId'),
+    userId: invitation.fromUserId,
+    type: accept ? 'invite_accepted' : 'invite_declined',
+    shelfId: invitation.shelfId,
+    actorUserId: respondingUserId,
+    invitationId: invitation.id,
+    createdAt: nowIso(),
+    readAt: null,
+  });
+  saveDb(db);
 }

@@ -5,6 +5,16 @@
   width: 100%;
 }
 
+.headerRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.title {
+  font-size: 1.1rem;
+}
+
 .list {
   list-style: none;
   margin: 0;
@@ -20,9 +30,64 @@
   border-radius: var(--radius-md);
   padding: 0.6rem 0.9rem;
   font-weight: 600;
+  animation: fadeInUp var(--transition-base) var(--ease-out);
 }
 
 .hint {
   color: var(--color-text-muted);
   font-size: 0.9rem;
+}
+
+.searchInput {
+  padding: 0.7rem 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-size: 1rem;
+  background: var(--color-bg);
+  color: var(--color-text);
+  transition: border-color var(--transition-fast) ease, box-shadow var(--transition-fast) ease;
+}
+
+.searchInput:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(169, 100, 60, 0.15);
+}
+
+.resultList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.resultItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.5rem 0.25rem;
+  border-bottom: 1px solid var(--color-border);
+  animation: fadeIn var(--transition-base) var(--ease-out);
+}
+
+.resultName {
+  font-weight: 600;
+}
+
+.sentBadge {
+  color: var(--color-success);
+  font-size: 0.85rem;
+  font-weight: 600;
+  animation: popIn 0.3s var(--ease-out);
+}
+
+.error {
+  color: var(--color-danger);
+  font-size: 0.85rem;
+  background: var(--color-danger-bg);
+  padding: 0.6rem 0.75rem;
+  border-radius: var(--radius-sm);
 }
