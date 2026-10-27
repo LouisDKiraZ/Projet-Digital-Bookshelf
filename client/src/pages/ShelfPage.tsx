@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { fetchShelf, fetchShelfMembers } from '../api/shelfApi';
 import { rememberShelf } from '../lib/recentShelves';
 import type { SavedShelf, ShelfMember } from '../types/shelf';
 import { ShelfIcon } from '../components/shelf/ShelfIcon';
+import { Button } from '../components/common/Button';
 import { ItemsTab } from '../components/shelf-view/ItemsTab';
 import { StatisticsTab } from '../components/shelf-view/StatisticsTab';
 import { PeopleTab } from '../components/shelf-view/PeopleTab';
@@ -22,7 +23,7 @@ export function ShelfPage() {
   const [selectedItemsTypeId, setSelectedItemsTypeId] = useState<number | null>(null);
   const [selectedStatsTypeId, setSelectedStatsTypeId] = useState<number | null>(null);
 
-  useEffect(() => {
+  function loadShelf() {
     if (!shelfId) {
       return;
     }
@@ -34,7 +35,12 @@ export function ShelfPage() {
         setSelectedStatsTypeId(loadedShelf.itemTypes[0]?.id ?? null);
         rememberShelf({ id: loadedShelf.id, name: loadedShelf.name, icon: loadedShelf.icon });
       })
-      .catch(() => setError('This shelf could not be found.'));
+      .catch(() => setError('This shelf was not found.'));
+  }
+
+  useEffect(() => {
+    loadShelf();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [shelfId]);
 
   if (error) {
@@ -47,12 +53,12 @@ export function ShelfPage() {
   return (
     <div className={styles.page}>
       <div className={styles.actionsRow}>
-        <Link to="/" className={styles.secondaryLink}>
-          Retour aux étagères
-        </Link>
-        <Link to={`/shelves/${shelf.id}/edit`} className={styles.secondaryLink}>
+        <Button as="link" to="/" variant="secondary" size="small">
+          Back to shelves
+        </Button>
+        <Button as="link" to={`/shelves/${shelf.id}/edit`} variant="secondary" size="small">
           Edit shelf
-        </Link>
+        </Button>
       </div>
 
       <div className={styles.header}>
@@ -80,11 +86,11 @@ export function ShelfPage() {
           className={`${styles.tab} ${tab === 'people' ? styles.tabActive : ''}`}
           onClick={() => setTab('people')}
         >
-          People
+          Members
         </button>
       </div>
 
-      <div className={styles.content}>
+      <div className={styles.content} key={tab}>
         {tab === 'items' && (
           <ItemsTab
             shelf={shelf}
@@ -100,7 +106,7 @@ export function ShelfPage() {
             onSelectItemType={setSelectedStatsTypeId}
           />
         )}
-        {tab === 'people' && <PeopleTab members={members} />}
+        {tab === 'people' && <PeopleTab shelf={shelf} members={members} />}
       </div>
     </div>
   );

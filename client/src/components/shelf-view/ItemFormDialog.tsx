@@ -3,6 +3,7 @@ import { API_URL } from '../../api/httpClient';
 import type { SavedField, SavedItem, SavedItemType, ShelfMember } from '../../types/shelf';
 import { FieldValueInput } from './FieldValueInput';
 import { Modal } from './Modal';
+import { Button } from '../common/Button';
 import styles from './ItemFormDialog.module.css';
 
 interface ItemFormDialogProps {
@@ -109,14 +110,14 @@ export function ItemFormDialog({ itemType, members, initialItem, onSubmit, onClo
     try {
       await onSubmit(values, photoFiles);
     } catch (submitError) {
-      setError(submitError instanceof Error ? submitError.message : 'Could not save this item.');
+      setError(submitError instanceof Error ? submitError.message : "Unable to save this item.");
     } finally {
       setIsSubmitting(false);
     }
   }
 
   return (
-    <Modal title={initialItem ? `Edit ${itemType.name}` : `Add a ${itemType.name}`} onClose={onClose}>
+    <Modal title={initialItem ? `Edit "${itemType.name}"` : `Add "${itemType.name}"`} onClose={onClose}>
       <div className={styles.form}>
         {itemType.fields.map((field) => (
           <div key={field.id} className={styles.row}>
@@ -139,17 +140,12 @@ export function ItemFormDialog({ itemType, members, initialItem, onSubmit, onClo
         {error && <p className={styles.error}>{error}</p>}
 
         <div className={styles.actions}>
-          <button type="button" className={styles.cancelButton} onClick={onClose}>
+          <Button variant="secondary" onClick={onClose}>
             Cancel
-          </button>
-          <button
-            type="button"
-            className={styles.saveButton}
-            onClick={handleSubmit}
-            disabled={isSubmitting}
-          >
+          </Button>
+          <Button variant="primary" onClick={handleSubmit} disabled={isSubmitting}>
             {isSubmitting ? 'Saving...' : 'Save'}
-          </button>
+          </Button>
         </div>
       </div>
     </Modal>

@@ -17,15 +17,22 @@
   border: 1px solid transparent;
   background: var(--color-bg);
   cursor: pointer;
+  transition: transform var(--transition-fast) ease, border-color var(--transition-fast) ease;
 }
 
 .emojiButton:hover {
   border-color: var(--color-border);
+  transform: scale(1.12);
+}
+
+.emojiButton:active {
+  transform: scale(0.95);
 }
 
 .emojiButtonSelected {
   border-color: var(--color-primary);
   background: #fff;
+  animation: popIn 0.25s var(--ease-out);
 }
 
 .customRow {

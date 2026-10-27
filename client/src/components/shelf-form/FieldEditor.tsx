@@ -47,7 +47,7 @@ export function FieldEditor({ field, fieldTypes, onChange, onRemove, canRemove }
           className={styles.removeButton}
           onClick={onRemove}
           disabled={!canRemove}
-          title={canRemove ? 'Remove this criterion' : 'An item type needs at least one criterion'}
+          title={canRemove ? 'Remove this criterion' : "An item type needs at least one criterion"}
         >
           Remove
         </button>
@@ -56,7 +56,7 @@ export function FieldEditor({ field, fieldTypes, onChange, onRemove, canRemove }
         <div className={styles.optionsRow}>
           <input
             className={styles.optionsInput}
-            placeholder="Options, separated by commas (e.g. Fantasy, Sci-Fi, Mystery)"
+            placeholder="Comma-separated options (e.g. Fantasy, Science fiction, Thriller)"
             value={field.listOptionsText}
             onChange={(event) => onChange({ ...field, listOptionsText: event.target.value })}
           />

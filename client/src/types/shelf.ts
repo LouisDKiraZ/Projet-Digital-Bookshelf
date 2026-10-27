@@ -89,3 +89,30 @@ export interface ItemHistoryEntry {
   changedBy: ShelfMember;
   changedAt: string;
 }
+
+export interface ShelfSummary {
+  id: number;
+  name: string;
+  icon: { type: 'emoji' | 'image'; value: string; bgColor: string | null };
+}
+
+export interface Invitation {
+  id: number;
+  shelf: ShelfSummary;
+  from: ShelfMember;
+  status: 'pending' | 'accepted' | 'declined';
+  createdAt: string;
+}
+
+export type NotificationType = 'invite_received' | 'invite_accepted' | 'invite_declined';
+
+export interface AppNotification {
+  id: number;
+  type: NotificationType;
+  shelf: ShelfSummary;
+  actor: ShelfMember;
+  invitationId: number | null;
+  invitationStatus: 'pending' | 'accepted' | 'declined' | null;
+  createdAt: string;
+  readAt: string | null;
+}

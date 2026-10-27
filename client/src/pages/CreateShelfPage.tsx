@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useUser } from '../context/UserContext';
 import { fetchFieldTypes } from '../api/fieldTypesApi';
 import { fetchFieldSuggestions } from '../api/fieldSuggestionsApi';
@@ -10,6 +10,7 @@ import type { FieldType, FieldSuggestion, SavedShelf, ShelfDraft } from '../type
 import { createEmptyItemType, parseListOptions, type ItemTypeFormState } from '../types/shelfForm';
 import { ShelfIconPicker } from '../components/shelf-form/ShelfIconPicker';
 import { ItemTypeList } from '../components/shelf-form/ItemTypeList';
+import { Button } from '../components/common/Button';
 import styles from './CreateShelfPage.module.css';
 
 interface CreateShelfPageProps {
@@ -28,7 +29,7 @@ function validateDraft(
     return 'Please give your shelf a name.';
   }
   if (iconMode === 'emoji' && !emoji.trim()) {
-    return 'Please pick an emoji for your shelf.';
+    return 'Please choose an emoji for your shelf.';
   }
   if (iconMode === 'image' && !imageFile && !imagePreviewUrl) {
     return 'Please choose a photo for your shelf.';
@@ -38,7 +39,7 @@ function validateDraft(
   }
   for (const itemType of itemTypes) {
     if (!itemType.name.trim()) {
-      return 'Every item type needs a name.';
+      return "Every item type needs a name.";
     }
     for (const field of itemType.fields) {
       if (!field.label.trim()) {
@@ -46,7 +47,7 @@ function validateDraft(
       }
       const type = field.fieldType;
       if (type === 'list' && parseListOptions(field.listOptionsText).length === 0) {
-        return `Criterion "${field.label}" needs at least one option.`;
+        return `The criterion "${field.label}" needs at least one option.`;
       }
     }
   }
@@ -98,7 +99,7 @@ export function CreateShelfPage({ mode = 'create' }: CreateShelfPageProps) {
         setFieldTypes(types);
         setSuggestions(loadedSuggestions);
       })
-      .catch(() => setError('Could not load the local form data. Please refresh the page.'))
+      .catch(() => setError('Unable to load the form data. Please refresh the page.'))
       .finally(() => setIsLoadingMeta(false));
   }, []);
 
@@ -123,7 +124,7 @@ export function CreateShelfPage({ mode = 'create' }: CreateShelfPageProps) {
           setImageFile(null);
         }
       })
-      .catch(() => setError('This shelf could not be found.'))
+      .catch(() => setError('This shelf was not found.'))
       .finally(() => setIsLoadingShelf(false));
   }, [mode, editingShelfId]);
 
@@ -184,7 +185,7 @@ export function CreateShelfPage({ mode = 'create' }: CreateShelfPageProps) {
       setError(
         submitError instanceof ApiError
           ? submitError.message
-          : `Could not ${mode === 'create' ? 'create' : 'update'} the shelf.`,
+          : `Unable to ${mode === 'create' ? "create" : "update"} the shelf.`,
       );
     } finally {
       setIsSubmitting(false);
@@ -195,14 +196,14 @@ export function CreateShelfPage({ mode = 'create' }: CreateShelfPageProps) {
     return <p>Loading...</p>;
   }
 
-  const title = mode === 'create' ? 'Create a shelf' : 'Edit shelf configuration';
+  const title = mode === 'create' ? 'Create a shelf' : "Edit shelf";
 
   return (
     <div className={styles.page}>
       <h1 className={styles.title}>{title}</h1>
-      <Link to="/" className={styles.secondaryLink}>
-        Retour aux étagères
-      </Link>
+      <Button as="link" to="/" variant="secondary" size="small" className={styles.backLink}>
+        Back to shelves
+      </Button>
 
       <section className={styles.section}>
         <h2 className={styles.sectionTitle}>Name and icon</h2>
@@ -228,8 +229,8 @@ export function CreateShelfPage({ mode = 'create' }: CreateShelfPageProps) {
       <section className={styles.section}>
         <h2 className={styles.sectionTitle}>What can this shelf hold?</h2>
         <p className={styles.sectionHint}>
-          Add one item type per kind of object (e.g. Book, Comic, Manga), and define what you
-          want to track about each one.
+          Add one item type per kind of item (e.g. Book, Comic, Manga), and define what
+          you want to track for each.
         </p>
         <ItemTypeList
           itemTypes={itemTypes}
@@ -242,20 +243,15 @@ export function CreateShelfPage({ mode = 'create' }: CreateShelfPageProps) {
       {error && <p className={styles.errorBanner}>{error}</p>}
 
       <div className={styles.submitRow}>
-        <button
-          type="button"
-          className={styles.submitButton}
-          onClick={handleSubmit}
-          disabled={isSubmitting}
-        >
+        <Button variant="primary" onClick={handleSubmit} disabled={isSubmitting}>
           {isSubmitting
             ? mode === 'create'
-              ? 'Creating shelf...'
-              : 'Saving changes...'
+              ? 'Creating...'
+              : 'Saving...'
             : mode === 'create'
-              ? 'Create shelf'
+              ? "Create shelf"
               : 'Save changes'}
-        </button>
+        </Button>
       </div>
     </div>
   );

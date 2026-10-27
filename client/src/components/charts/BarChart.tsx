@@ -17,7 +17,7 @@ interface BarChartProps {
 // names...) don't need to be rotated.
 export function BarChart({ data, ariaLabel, valueFormatter }: BarChartProps) {
   if (data.length === 0) {
-    return <p className={styles.empty}>No data yet for this criterion.</p>;
+    return <p className={styles.empty}>No data for this criterion yet.</p>;
   }
 
   const maxValue = Math.max(...data.map((datum) => datum.value), 1);

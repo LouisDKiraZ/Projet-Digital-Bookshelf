@@ -1,0 +1,97 @@
+.envelope {
+  position: relative;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  overflow: hidden;
+  padding: 2.25rem 1rem 1rem;
+  animation: scaleIn var(--transition-base) var(--ease-out);
+  transition: opacity var(--transition-base) ease;
+}
+
+.unread {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 1px rgba(169, 100, 60, 0.15);
+}
+
+.read {
+  opacity: 0.72;
+}
+
+.flap {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 44px;
+  background: linear-gradient(135deg, var(--color-secondary-bg), var(--color-border));
+  clip-path: polygon(0 0, 50% 68%, 100% 0);
+}
+
+.unread .flap {
+  background: linear-gradient(135deg, #e9c9a8, var(--color-primary));
+}
+
+.seal {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--color-surface);
+  border: 2px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  box-shadow: var(--shadow-card);
+  z-index: 1;
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.message {
+  font-size: 0.92rem;
+  color: var(--color-text);
+  line-height: 1.4;
+}
+
+.message strong {
+  font-weight: 700;
+}
+
+.time {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+.actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.statusNote {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  font-style: italic;
+  margin-top: 0.25rem;
+}
+
+.leaving {
+  animation: none;
+  opacity: 0;
+  transform: scale(0.9);
+  max-height: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+  margin: 0;
+  transition: opacity var(--transition-base) ease, transform var(--transition-base) ease,
+    max-height var(--transition-base) ease, padding var(--transition-base) ease;
+}

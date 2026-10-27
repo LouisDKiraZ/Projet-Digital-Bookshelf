@@ -16,7 +16,7 @@ export async function createShelf(
   try {
     return await createShelfLocally(draft, createdByUserId, imageFile);
   } catch (error) {
-    throw new ApiError(error instanceof Error ? error.message : 'Could not create shelf.', 400);
+    throw new ApiError(error instanceof Error ? error.message : "Unable to create the shelf.", 400);
   }
 }
 
@@ -28,7 +28,7 @@ export async function updateShelf(
   try {
     return await updateShelfLocally(shelfId, draft, imageFile);
   } catch (error) {
-    throw new ApiError(error instanceof Error ? error.message : 'Could not update shelf.', 400);
+    throw new ApiError(error instanceof Error ? error.message : "Unable to update the shelf.", 400);
   }
 }
 
@@ -40,7 +40,7 @@ export async function fetchShelf(id: number): Promise<SavedShelf> {
   try {
     return getShelf(id);
   } catch (error) {
-    throw new ApiError(error instanceof Error ? error.message : 'Could not load shelf.', 404);
+    throw new ApiError(error instanceof Error ? error.message : "Unable to load the shelf.", 404);
   }
 }
 
@@ -48,6 +48,6 @@ export async function fetchShelfMembers(shelfId: number): Promise<ShelfMember[]>
   try {
     return getShelfMembers(shelfId);
   } catch (error) {
-    throw new ApiError(error instanceof Error ? error.message : 'Could not load members.', 404);
+    throw new ApiError(error instanceof Error ? error.message : 'Unable to load the members.', 404);
   }
 }

@@ -1,17 +1,13 @@
-// There is no login yet (see CLAUDE.md "Known gaps"). The app only needs
-// to know who's acting so a shelf can record a creator and a members list
-// can exist later. A display name typed once, persisted in localStorage
-// and mirrored to the `users` table, is enough for that.
-
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
-import { identifyUser, type IdentifiedUser } from '../api/userApi';
+import type { IdentifiedUser } from '../api/userApi';
 
-const STORAGE_KEY = 'digital-bookshelf.displayName';
+const SESSION_KEY = 'digital-bookshelf.session';
 
 interface UserContextValue {
   user: IdentifiedUser | null;
   isLoading: boolean;
-  setDisplayName: (displayName: string) => Promise<void>;
+  loginSession: (user: IdentifiedUser) => void;
+  logout: () => void;
 }
 
 const UserContext = createContext<UserContextValue | null>(null);
@@ -21,24 +17,29 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const storedName = localStorage.getItem(STORAGE_KEY);
-    if (!storedName) {
-      setIsLoading(false);
-      return;
+    const storedSession = localStorage.getItem(SESSION_KEY);
+    if (storedSession) {
+      try {
+        setUser(JSON.parse(storedSession));
+      } catch {
+        localStorage.removeItem(SESSION_KEY);
+      }
     }
-    identifyUser(storedName)
-      .then(setUser)
-      .finally(() => setIsLoading(false));
+    setIsLoading(false);
   }, []);
 
-  async function setDisplayName(displayName: string) {
-    const identified = await identifyUser(displayName);
-    localStorage.setItem(STORAGE_KEY, identified.displayName);
-    setUser(identified);
+  function loginSession(loggedInUser: IdentifiedUser) {
+    localStorage.setItem(SESSION_KEY, JSON.stringify(loggedInUser));
+    setUser(loggedInUser);
+  }
+
+  function logout() {
+    localStorage.removeItem(SESSION_KEY);
+    setUser(null);
   }
 
   return (
-    <UserContext.Provider value={{ user, isLoading, setDisplayName }}>
+    <UserContext.Provider value={{ user, isLoading, loginSession, logout }}>
       {children}
     </UserContext.Provider>
   );

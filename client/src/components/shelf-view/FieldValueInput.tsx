@@ -49,7 +49,7 @@ export function FieldValueInput({
           value={value}
           onChange={(event) => onChange(event.target.value)}
         >
-          <option value="">Select...</option>
+          <option value="">Choose...</option>
           {field.listOptions?.map((option) => (
             <option key={option} value={option}>
               {option}
@@ -64,7 +64,7 @@ export function FieldValueInput({
           value={value}
           onChange={(event) => onChange(event.target.value)}
         >
-          <option value="">Select a person...</option>
+          <option value="">Choose a person...</option>
           {members.map((member) => (
             <option key={member.id} value={member.id}>
               {member.displayName}
